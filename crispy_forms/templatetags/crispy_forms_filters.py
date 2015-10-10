@@ -4,25 +4,22 @@ from django.forms import forms
 from django.forms.formsets import BaseFormSet
 from django.template import Context
 from django.template.loader import get_template
-from django.utils.functional import memoize
 from django.utils.safestring import mark_safe
 from django import template
 
+from crispy_forms.compatibility import lru_cache
 from crispy_forms.exceptions import CrispyError
-from crispy_forms.utils import flatatt
-
-TEMPLATE_PACK = getattr(settings, 'CRISPY_TEMPLATE_PACK', 'bootstrap')
-DEBUG = getattr(settings, 'DEBUG', False)
+from crispy_forms.utils import flatatt, TEMPLATE_PACK
 
 
+@lru_cache()
 def uni_formset_template(template_pack=TEMPLATE_PACK):
     return get_template('%s/uni_formset.html' % template_pack)
-uni_formset_template = memoize(uni_formset_template, {}, 1)
 
 
+@lru_cache()
 def uni_form_template(template_pack=TEMPLATE_PACK):
     return get_template('%s/uni_form.html' % template_pack)
-uni_form_template = memoize(uni_form_template, {}, 1)
 
 register = template.Library()
 
@@ -43,7 +40,7 @@ def as_crispy_form(form, template_pack=TEMPLATE_PACK, label_class="", field_clas
 
         {{ myform|crispy:"bootstrap" }}
 
-    In ``bootstrap3`` for horizontal forms you can do::
+    In ``bootstrap3`` or ``bootstrap4`` for horizontal forms you can do::
 
         {{ myform|label_class:"col-lg-2",field_class:"col-lg-8" }}
     """
@@ -101,7 +98,7 @@ def as_crispy_field(field, template_pack=TEMPLATE_PACK):
 
         {{ form.field|as_crispy_field:"bootstrap" }}
     """
-    if not isinstance(field, forms.BoundField) and DEBUG:
+    if not isinstance(field, forms.BoundField) and settings.DEBUG:
         raise CrispyError('|as_crispy_field got passed an invalid or inexistent field')
 
     template = get_template('%s/field.html' % template_pack)
